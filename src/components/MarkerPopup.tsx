@@ -10,46 +10,62 @@ const mapPinIcon = Leaflet.icon({
   popupAnchor: [-4, -4],
 })
 
-type Props = {
-  help: {
-    location: {
-      lat: number
-      lng: number
-    }
-    message: string
-  }
-}
-
-type LocationData = {
+type Data = {
   name: string
+  location: {
+    lat: number
+    lng: number
+    address: string
+  }
+  battery_status: number
 }
 
-export default function MarkerPopup({ help }: Props) {
-  const { location, message } = help
-  const [locationData, setLocationData] = useState<LocationData | null>(null)
+export default function MarkerPopup() {
+  const [data, setData] = useState<Data | null>(null)
+  const imei = 356132115371941
 
   useEffect(() => {
     ;(async function loadLocationData() {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${location.lng}%2C%20${location.lat}.json?access_token=${process.env.NEXT_PUBLIC_TOKEN_MAP_BOX}`,
-      )
-
+      const response = await fetch(`/api/scalefusion/${imei}`)
       const data = await response.json()
 
-      setLocationData({ name: data.features[0].place_name })
+      setData(data.dataDevice)
     })()
-  }, [location])
+  }, [])
 
   return (
-    <Marker position={[location.lat, location.lng]} icon={mapPinIcon}>
-      <Popup closeButton={false}>
-        <div className="flex flex-col gap-2">
-          <span className="font-semibold">{locationData?.name}</span>
-          <span>
-            <strong className="font-semibold">Mensagem:</strong> {message}
-          </span>
-        </div>
-      </Popup>
-    </Marker>
+    <>
+      {data && (
+        <Marker
+          position={[data.location.lat, data.location.lng]}
+          icon={mapPinIcon}
+        >
+          <Popup closeButton={false}>
+            <div className="flex flex-col gap-2">
+              <span className="font-semibold">{data?.location.address}</span>
+              <span>
+                <strong className="font-semibold">Nome:</strong> {data?.name}
+              </span>
+              <span className="flex gap-8">
+                <div>
+                  <strong className="font-semibold">Bateria:</strong>{' '}
+                  {`${data.battery_status}%`}
+                </div>
+                <div>
+                  <strong className="font-semibold">
+                    Horário da ocorrência:
+                  </strong>{' '}
+                  {'16:40'}
+                </div>
+              </span>
+              <span>
+                <strong className="font-semibold">Mensagem:</strong>{' '}
+                {'Estou presa nessa casa, preciso de ajuda.'}
+              </span>
+            </div>
+          </Popup>
+        </Marker>
+      )}
+    </>
   )
 }
