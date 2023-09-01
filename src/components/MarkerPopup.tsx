@@ -1,4 +1,5 @@
 'use client'
+import socket from '@/services/socket'
 import Leaflet from 'leaflet'
 import { useEffect, useState } from 'react'
 import { Popup, Marker } from 'react-leaflet'
@@ -22,15 +23,24 @@ type Data = {
 
 export default function MarkerPopup() {
   const [data, setData] = useState<Data | null>(null)
-  const imei = 356132115371941
+  // const imei = 356132115371941
 
   useEffect(() => {
-    ;(async function loadLocationData() {
-      const response = await fetch(`/api/scalefusion/${imei}`)
+    socket.on('connect', () => {
+      console.log('Conectado ao servidor Socket.IO')
+    })
+
+    socket.on('message', async (message) => {
+      console.log(message)
+      const response = await fetch(`/api/scalefusion/${message}`)
       const data = await response.json()
 
       setData(data.dataDevice)
-    })()
+    })
+
+    return () => {
+      socket.disconnect()
+    }
   }, [])
 
   return (
